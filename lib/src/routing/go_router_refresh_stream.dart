@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 
 /// This class was imported from the migration guide for GoRouter 5.0
