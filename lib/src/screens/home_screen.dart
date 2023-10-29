@@ -46,14 +46,40 @@ class JobsListView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final firestoreRepository = ref.watch(firestoreRepositoryProvider);
+    final user = ref.watch(firebaseAuthProvider).currentUser;
     return FirestoreListView<Job>(
-      query: firestoreRepository.jobsQuery(), 
+      query: firestoreRepository.jobsQuery(user!.uid), 
+      errorBuilder: (context, error, stackTrace) => Center(child: Text(error.toString())),
+      emptyBuilder: (context) => const Center(child: Text('no Data')),
       itemBuilder: (BuildContext context, 
           QueryDocumentSnapshot<Job> doc) {
             final job = doc.data();
-            return ListTile(
-              title:Text(job.title),
-              subtitle: Text(job.company)
+            return Dismissible(
+              key: Key(doc.id),
+              background: const ColoredBox(color: Colors.red),
+              direction: DismissDirection.endToStart,
+              onDismissed: (direction) {
+                final user = ref.read(firebaseAuthProvider).currentUser;
+                ref
+                  .read(firestoreRepositoryProvider)
+                  .deleteJob(user!.uid, doc.id);
+              },
+              child: ListTile(
+                title:Text(job.title),
+                subtitle: Text(job.company),
+                onTap: () {
+                  final user = ref.read(firebaseAuthProvider).currentUser;
+                  final faker = Faker();
+                  final title = faker.job.title();
+                  final company = faker.company.name();
+                  ref.read(firestoreRepositoryProvider).updateJob(
+                    user!.uid,
+                    doc.id,
+                    title,
+                    company
+                  );
+                },
+              ),
             );
           },
       
